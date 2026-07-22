@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@clerk/localizations": "^4.9.3",
+    "@clerk/localizations": "^4.13.6",
     "@clerk/nextjs": "^7.5.7",
     "@hookform/resolvers": "^5.4.0",
     "@tabler/icons-react": "^3.44.0",
