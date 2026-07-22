@@ -6,9 +6,11 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   IconLogout,
+  IconMedal,
   IconSalad,
   IconTrendingUp,
   IconUser,
+  IconUsers,
 } from "@tabler/icons-react";
 
 function initialsFrom(firstName?: string | null, lastName?: string | null) {
@@ -152,6 +154,24 @@ export function ProfileMenu({
           >
             <IconTrendingUp size={15} />
             Progression
+          </Link>
+          <Link
+            href="/gamification"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 text-[13px] text-zinc-700 hover:bg-zinc-50"
+          >
+            <IconMedal size={15} />
+            Récompenses
+          </Link>
+          <Link
+            href="/community"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 text-[13px] text-zinc-700 hover:bg-zinc-50"
+          >
+            <IconUsers size={15} />
+            Communauté
           </Link>
 
           <div className="border-t-[0.5px] border-zinc-200" />

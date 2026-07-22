@@ -160,3 +160,120 @@ export type RpeTrend = {
     avg_rpe: number;
   }[];
 };
+
+// Miroir de app/schemas/user.py (UserResponse).
+export type UserLevel = "beginner" | "intermediate" | "advanced";
+export type UserGoal = "strength" | "hypertrophy" | "weight_loss" | "endurance";
+
+export type UserProfile = {
+  id: string;
+  clerk_user_id: string;
+  email: string;
+  display_name: string;
+  invite_code?: string | null;
+  level: UserLevel;
+  goal: UserGoal;
+  availability_days: number[];
+  rgpd_consent: Record<string, boolean>;
+  medical_disclaimer_accepted_at?: string | null;
+  onboarding_completed: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+// Miroir de app/schemas/notification.py (Module 10).
+export type NotificationPreferences = {
+  session_reminders: boolean;
+  streak_alerts: boolean;
+  badge_unlocks: boolean;
+};
+
+// Miroir de app/schemas/export.py (Module 11).
+export type ExportFormat = "json" | "csv";
+export type ExportStatus = "processing" | "ready" | "failed";
+
+export type ExportRequestResponse = {
+  export_id: string;
+  status: ExportStatus;
+};
+
+export type ExportStatusResponse = {
+  status: ExportStatus;
+  download_url?: string | null;
+};
+
+// Miroir de app/schemas/gamification.py (Module 8).
+export type Badge = {
+  badge_id: string;
+  name: string;
+  icon: string;
+  unlocked_at: string;
+};
+
+export type GamificationProfile = {
+  total_xp: number;
+  level: number;
+  xp_to_next_level: number;
+  badges: Badge[];
+};
+
+export type BadgeCatalogItem = {
+  badge_id: string;
+  name: string;
+  icon: string;
+  description: string;
+  unlocked: boolean;
+  unlocked_at?: string | null;
+};
+
+export type BadgeCatalog = {
+  items: BadgeCatalogItem[];
+};
+
+// Miroir de app/schemas/friends.py (Module 9).
+export type Friend = {
+  user_id: string;
+  display_name: string;
+  current_streak: number;
+  level: number;
+};
+
+export type FriendList = {
+  items: Friend[];
+};
+
+export type IncomingFriendRequest = {
+  request_id: string;
+  requester_id: string;
+  display_name: string;
+};
+
+export type IncomingFriendRequestList = {
+  items: IncomingFriendRequest[];
+};
+
+export type FriendFeedItem = {
+  user_id: string;
+  display_name: string;
+  session_summary: {
+    muscle_groups: string[];
+    duration_minutes: number;
+  };
+  logged_at: string;
+};
+
+export type FriendFeed = {
+  items: FriendFeedItem[];
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  user_id: string;
+  display_name: string;
+  weekly_xp: number;
+};
+
+export type Leaderboard = {
+  week_start: string;
+  rankings: LeaderboardEntry[];
+};

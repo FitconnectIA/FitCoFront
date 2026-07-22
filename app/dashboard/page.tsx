@@ -9,10 +9,12 @@ import {
   IconAlertTriangle,
   IconBarbell,
   IconFlask,
+  IconMedal,
   IconPlus,
   IconRefresh,
   IconSalad,
   IconTrendingUp,
+  IconUsers,
 } from "@tabler/icons-react";
 import { BottomNav } from "@/app/_components/bottom-nav";
 import { ProfileMenu } from "@/app/_components/profile-menu";
@@ -173,6 +175,20 @@ export default function DashboardPage() {
           >
             <IconTrendingUp size={15} className="text-[#0F6E56]" />
             Progression
+          </Link>
+          <Link
+            href="/gamification"
+            className="flex items-center justify-center gap-1.5 rounded-lg border-[0.5px] border-[#D1D5DB] bg-white py-2.5 text-[13px] font-medium text-zinc-700 hover:border-[#9FE1CB]"
+          >
+            <IconMedal size={15} className="text-[#0F6E56]" />
+            Récompenses
+          </Link>
+          <Link
+            href="/community"
+            className="flex items-center justify-center gap-1.5 rounded-lg border-[0.5px] border-[#D1D5DB] bg-white py-2.5 text-[13px] font-medium text-zinc-700 hover:border-[#9FE1CB]"
+          >
+            <IconUsers size={15} className="text-[#0F6E56]" />
+            Communauté
           </Link>
         </div>
 
