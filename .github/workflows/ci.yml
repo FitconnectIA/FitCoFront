@@ -56,3 +56,9 @@ jobs:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1' }}
+
+      # OWASP A06 — scan des dépendances vulnérables (high/critical). Informatif ;
+      # Dependabot ouvre les PR de mise à jour (voir .github/dependabot.yml).
+      - name: Audit des dépendances (npm audit)
+        continue-on-error: true
+        run: npm audit --audit-level=high

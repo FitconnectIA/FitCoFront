@@ -1,0 +1,13 @@
+# OWASP A06 — mises à jour automatiques des dépendances vulnérables/obsolètes.
+# Dependabot ouvre des pull requests hebdomadaires vers main.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
