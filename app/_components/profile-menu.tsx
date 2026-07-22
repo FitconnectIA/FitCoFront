@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useClerk, useUser } from "@clerk/nextjs";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   IconLogout,
   IconMedal,
@@ -12,11 +12,20 @@ import {
   IconUser,
   IconUsers,
 } from "@tabler/icons-react";
+import { useApiClient } from "@/lib/use-api-client";
+import type { UserProfile } from "@/lib/types";
 
-function initialsFrom(firstName?: string | null, lastName?: string | null) {
-  const first = firstName?.charAt(0) ?? "";
-  const last = lastName?.charAt(0) ?? "";
-  return `${first}${last}`.toUpperCase() || "?";
+/** Initiales d'un nom complet, ou null si aucun nom exploitable. */
+function initialsFromName(name: string): string | null {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return null;
+  }
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase();
 }
 
 type ProfileMenuProps = {
@@ -33,6 +42,13 @@ export function ProfileMenu({
   const { user } = useUser();
   const { signOut } = useClerk();
   const queryClient = useQueryClient();
+  const apiClient = useApiClient();
+
+  const profileQuery = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: () => apiClient<UserProfile>("/users/me"),
+    staleTime: 1000 * 60 * 5,
+  });
 
   const [open, setOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -69,8 +85,16 @@ export function ProfileMenu({
     await signOut({ redirectUrl: "/sign-out" });
   }
 
-  const initials = initialsFrom(user?.firstName, user?.lastName);
   const email = user?.primaryEmailAddress?.emailAddress;
+  const emailPrefix = email ? email.split("@")[0] : "";
+
+  // Nom réel : display_name du backend (éditable dans le profil) puis nom Clerk.
+  const resolvedName =
+    profileQuery.data?.display_name?.trim() || user?.fullName?.trim() || "";
+  // Libellé affiché : nom réel, sinon préfixe de l'email, sinon générique.
+  const displayLabel = resolvedName || emailPrefix || "Utilisateur";
+  // Initiales seulement si on a un vrai nom ; sinon on affichera l'icône profil.
+  const initials = resolvedName ? initialsFromName(resolvedName) : null;
 
   return (
     <div ref={containerRef} className="relative">
@@ -83,9 +107,13 @@ export function ProfileMenu({
           aria-label="Menu profil"
           className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E1F5EE]"
         >
-          <span className="text-[12px] font-medium text-[#0F6E56]">
-            {initials}
-          </span>
+          {initials ? (
+            <span className="text-[12px] font-medium text-[#0F6E56]">
+              {initials}
+            </span>
+          ) : (
+            <IconUser size={16} className="text-[#0F6E56]" />
+          )}
         </button>
       ) : (
         <button
@@ -112,11 +140,11 @@ export function ProfileMenu({
         >
           <div className="flex items-center gap-2 px-3 py-2.5">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E1F5EE] text-[11px] font-medium text-[#0F6E56]">
-              {initials}
+              {initials ?? <IconUser size={14} className="text-[#0F6E56]" />}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-[13px] font-medium text-zinc-900">
-                {user?.fullName ?? "Utilisateur"}
+                {displayLabel}
               </span>
               {email && (
                 <span className="block truncate text-[13px] text-zinc-500">
