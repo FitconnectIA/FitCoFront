@@ -7,9 +7,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   IconArrowLeft,
+  IconCheck,
   IconCopy,
   IconDownload,
   IconLogout,
+  IconPencil,
+  IconX,
 } from "@tabler/icons-react";
 import { BottomNav } from "@/app/_components/bottom-nav";
 import { useApiClient } from "@/lib/use-api-client";
@@ -20,6 +23,8 @@ import type {
   NotificationPreferences,
   UserProfile,
 } from "@/lib/types";
+
+const MAX_NAME_LENGTH = 60;
 
 const LEVEL_LABELS: Record<string, string> = {
   beginner: "Débutant",
@@ -86,6 +91,8 @@ export default function ProfilePage() {
   const [exportJob, setExportJob] = useState<{ id: string; format: ExportFormat } | null>(null);
   const [downloaded, setDownloaded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
 
   const profileQuery = useQuery({
     queryKey: ["user-profile"],
@@ -96,6 +103,22 @@ export default function ProfilePage() {
     queryKey: ["notification-preferences"],
     queryFn: () => apiClient<NotificationPreferences>("/notifications/preferences"),
     staleTime: 1000 * 60 * 5,
+  });
+
+  const updateName = useMutation({
+    mutationFn: (display_name: string) =>
+      apiClient<UserProfile>("/users/me", {
+        method: "PATCH",
+        body: JSON.stringify({ display_name }),
+      }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["user-profile"], data);
+      // Le nom apparaît aussi dans le leaderboard (ma propre ligne) → rafraîchir.
+      queryClient.invalidateQueries({ queryKey: ["leaderboard", "weekly"] });
+      setEditingName(false);
+      toast.success("Nom mis à jour");
+    },
+    onError: () => toast.error("Mise à jour du nom impossible."),
   });
 
   const updatePrefs = useMutation({
@@ -213,10 +236,59 @@ export default function ProfilePage() {
                   {initialsFrom(profile.display_name, profile.email)}
                 </span>
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-[15px] font-medium text-zinc-900">
-                  {profile.display_name || "Utilisateur"}
-                </p>
+              <div className="min-w-0 flex-1">
+                {editingName ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      value={nameDraft}
+                      autoFocus
+                      maxLength={MAX_NAME_LENGTH}
+                      onChange={(e) => setNameDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && nameDraft.trim()) {
+                          updateName.mutate(nameDraft.trim());
+                        } else if (e.key === "Escape") {
+                          setEditingName(false);
+                        }
+                      }}
+                      className="min-w-0 flex-1 rounded-md border border-zinc-300 px-2 py-1 text-[15px] text-zinc-900 outline-none focus:border-[#0F6E56]"
+                    />
+                    <button
+                      type="button"
+                      aria-label="Enregistrer"
+                      disabled={updateName.isPending || nameDraft.trim().length === 0}
+                      onClick={() => updateName.mutate(nameDraft.trim())}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#0F6E56] text-white disabled:opacity-50"
+                    >
+                      <IconCheck size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Annuler"
+                      onClick={() => setEditingName(false)}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-zinc-200 text-zinc-500"
+                    >
+                      <IconX size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-[15px] font-medium text-zinc-900">
+                      {profile.display_name || "Utilisateur"}
+                    </p>
+                    <button
+                      type="button"
+                      aria-label="Modifier le nom"
+                      onClick={() => {
+                        setNameDraft(profile.display_name ?? "");
+                        setEditingName(true);
+                      }}
+                      className="shrink-0 text-zinc-400 hover:text-[#0F6E56]"
+                    >
+                      <IconPencil size={15} />
+                    </button>
+                  </div>
+                )}
                 <p className="truncate text-[13px] text-zinc-500">{profile.email}</p>
               </div>
             </div>
