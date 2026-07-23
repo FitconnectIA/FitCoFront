@@ -26,8 +26,9 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center gap-1 py-3 ${
-                active ? "text-[#0F6E56]" : "text-zinc-400"
+                active ? "text-[#0F6E56]" : "text-zinc-600"
               }`}
+              aria-current={active ? "page" : undefined}
             >
               <Icon size={20} />
               <span className="text-[10px]">{item.label}</span>

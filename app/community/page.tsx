@@ -147,6 +147,7 @@ export default function CommunityPage() {
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
               placeholder="Code d'invitation"
+              aria-label="Code d'invitation de ton ami"
               className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-[14px] tracking-wider text-zinc-900 outline-none focus:border-[#0F6E56]"
             />
             <button

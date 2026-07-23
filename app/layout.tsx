@@ -33,7 +33,15 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <QueryProvider>{children}</QueryProvider>
+          {/* Accessibilité (OPQUAST) — lien d'évitement vers le contenu. */}
+          <a href="#contenu" className="skip-link">
+            Aller au contenu
+          </a>
+          <QueryProvider>
+            <div id="contenu" tabIndex={-1}>
+              {children}
+            </div>
+          </QueryProvider>
           <Toaster position="top-center" richColors />
         </body>
       </html>

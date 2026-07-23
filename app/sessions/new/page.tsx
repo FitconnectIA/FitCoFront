@@ -53,8 +53,12 @@ function NewSessionForm() {
   // Date (YYYY-MM-DD) de la séance recommandée à pré-remplir, si on arrive
   // depuis le bouton « Logger cette séance » du dashboard.
   const recoDate = searchParams.get("reco");
+  // Mode édition d'une séance existante (bouton « Modifier » du détail).
+  const editId = searchParams.get("edit");
+  const isEditing = Boolean(editId);
 
-  const [startedAt] = useState(() => new Date().toISOString());
+  const [startedAt, setStartedAt] = useState(() => new Date().toISOString());
+  const [endedAt, setEndedAt] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [exercises, setExercises] = useState<ExerciseDraft[]>([]);
   const [sessionRpe, setSessionRpe] = useState(7);
@@ -94,6 +98,43 @@ function NewSessionForm() {
     );
   }, [recoDate, recommendationQuery.data]);
 
+  const editSessionQuery = useQuery({
+    queryKey: ["session", editId],
+    queryFn: () => apiClient<Session>(`/sessions/${editId}`),
+    enabled: isEditing,
+  });
+
+  useEffect(() => {
+    if (!isEditing || prefilledRef.current || !editSessionQuery.data) {
+      return;
+    }
+    const loaded = editSessionQuery.data;
+    prefilledRef.current = true;
+    setSource(loaded.source);
+    setStartedAt(loaded.started_at);
+    setEndedAt(loaded.ended_at);
+    if (loaded.session_rpe != null) {
+      setSessionRpe(loaded.session_rpe);
+    }
+    setExercises(
+      loaded.exercises
+        .slice()
+        .sort((a, b) => a.order - b.order)
+        .map((exercise) => ({
+          exercise_id: exercise.exercise_id,
+          exercise_name: exercise.exercise_name ?? "Exercice",
+          sets: exercise.sets.length
+            ? exercise.sets.map((set) => ({
+                key: crypto.randomUUID(),
+                reps: String(set.reps),
+                weight_kg: String(set.weight_kg),
+                rpe: set.rpe != null ? String(set.rpe) : "",
+              }))
+            : [createEmptySet()],
+        })),
+    );
+  }, [isEditing, editSessionQuery.data]);
+
   const debouncedSearch = useDebouncedValue(search, 300);
   const showDropdown = debouncedSearch.trim().length > 1;
 
@@ -108,14 +149,20 @@ function NewSessionForm() {
 
   const mutation = useMutation({
     mutationFn: (payload: NewSessionPayload) =>
-      apiClient<Session>("/sessions", {
-        method: "POST",
+      apiClient<Session>(isEditing ? `/sessions/${editId}` : "/sessions", {
+        method: isEditing ? "PATCH" : "POST",
         body: JSON.stringify(payload),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      toast.success("Séance enregistrée");
-      router.push("/dashboard");
+      if (isEditing) {
+        queryClient.invalidateQueries({ queryKey: ["session", editId] });
+        toast.success("Séance mise à jour");
+        router.push(`/sessions/${editId}`);
+      } else {
+        toast.success("Séance enregistrée");
+        router.push("/dashboard");
+      }
     },
     onError: (error) => {
       setFormError(
@@ -213,7 +260,7 @@ function NewSessionForm() {
 
     mutation.mutate({
       started_at: startedAt,
-      ended_at: new Date().toISOString(),
+      ended_at: endedAt ?? new Date().toISOString(),
       session_rpe: sessionRpe,
       source,
       exercises: payloadExercises,
@@ -233,7 +280,9 @@ function NewSessionForm() {
             >
               <IconArrowLeft size={15} />
             </button>
-            <h1 className="text-xl font-bold text-zinc-900">Nouvelle séance</h1>
+            <h1 className="text-xl font-bold text-zinc-900">
+              {isEditing ? "Modifier la séance" : "Nouvelle séance"}
+            </h1>
           </div>
           <ProfileMenu />
         </div>
@@ -251,7 +300,8 @@ function NewSessionForm() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un exercice…"
-            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-[#0F6E56]"
+            aria-label="Rechercher un exercice"
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-500 outline-none focus:border-[#0F6E56]"
           />
           {showDropdown && (
             <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-md border-[0.5px] border-zinc-300 bg-white shadow-sm">
@@ -328,6 +378,7 @@ function NewSessionForm() {
                       inputMode="numeric"
                       min={0}
                       value={set.reps}
+                      aria-label={`Répétitions, série ${setIndex + 1}`}
                       onChange={(e) =>
                         updateSet(exIndex, set.key, { reps: e.target.value })
                       }
@@ -339,6 +390,7 @@ function NewSessionForm() {
                       min={0}
                       step="0.5"
                       value={set.weight_kg}
+                      aria-label={`Poids en kg, série ${setIndex + 1}`}
                       onChange={(e) =>
                         updateSet(exIndex, set.key, {
                           weight_kg: e.target.value,
@@ -352,6 +404,7 @@ function NewSessionForm() {
                       min={1}
                       max={10}
                       value={set.rpe}
+                      aria-label={`RPE, série ${setIndex + 1}`}
                       onChange={(e) =>
                         updateSet(exIndex, set.key, { rpe: e.target.value })
                       }
@@ -392,6 +445,8 @@ function NewSessionForm() {
               min={1}
               max={10}
               value={sessionRpe}
+              aria-label="Ressenti global de la séance (RPE de 1 à 10)"
+              aria-valuetext={`${sessionRpe} sur 10`}
               onChange={(e) => setSessionRpe(Number(e.target.value))}
               className="flex-1 accent-[#0F6E56]"
             />
@@ -415,7 +470,11 @@ function NewSessionForm() {
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0F6E56] px-4 py-4 font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <IconCheck size={16} />
-          {mutation.isPending ? "Enregistrement..." : "Terminer la séance"}
+          {mutation.isPending
+            ? "Enregistrement..."
+            : isEditing
+              ? "Enregistrer les modifications"
+              : "Terminer la séance"}
         </button>
       </div>
 

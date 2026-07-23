@@ -243,6 +243,7 @@ export default function ProfilePage() {
                       value={nameDraft}
                       autoFocus
                       maxLength={MAX_NAME_LENGTH}
+                      aria-label="Nom affiché"
                       onChange={(e) => setNameDraft(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && nameDraft.trim()) {

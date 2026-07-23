@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { IconAlertTriangle } from "@tabler/icons-react";
+import { IconAlertTriangle, IconArrowLeft } from "@tabler/icons-react";
 import {
   Bar,
   BarChart,
@@ -93,6 +94,7 @@ function ChartState({ query, empty }: { query: { isLoading: boolean; isError: bo
 
 export default function ProgressPage() {
   const apiClient = useApiClient();
+  const router = useRouter();
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
 
   // Catalogue chargé une seule fois pour alimenter le select.
@@ -169,9 +171,19 @@ export default function ProgressPage() {
     <main className="min-h-screen bg-secondary px-4 py-6 pb-24">
       <div className="mx-auto max-w-[440px]">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-4xl font-extrabold leading-tight text-zinc-900">
-            Progression
-          </h1>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Retour"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-[0.5px] border-zinc-300"
+            >
+              <IconArrowLeft size={15} />
+            </button>
+            <h1 className="text-4xl font-extrabold leading-tight text-zinc-900">
+              Progression
+            </h1>
+          </div>
           <ProfileMenu />
         </div>
 

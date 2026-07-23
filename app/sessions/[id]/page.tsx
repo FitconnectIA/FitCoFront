@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { IconArrowLeft, IconEdit, IconTrash } from "@tabler/icons-react";
 import { BottomNav } from "@/app/_components/bottom-nav";
-import { ProfileMenu } from "@/app/_components/profile-menu";
 import { useApiClient } from "@/lib/use-api-client";
 import { ApiError } from "@/lib/api-client";
 import type { Session } from "@/lib/types";
@@ -14,6 +15,18 @@ export default function SessionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const apiClient = useApiClient();
+  const queryClient = useQueryClient();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiClient(`/sessions/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Séance supprimée");
+      router.push("/sessions");
+    },
+    onError: () => toast.error("Suppression impossible."),
+  });
 
   const {
     data: session,
@@ -55,7 +68,25 @@ export default function SessionDetailPage() {
               {session ? formatFullDate(session.started_at) : ""}
             </h1>
           </div>
-          <ProfileMenu />
+          {session && (
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                href={`/sessions/new?edit=${id}`}
+                aria-label="Modifier la séance"
+                className="flex h-8 w-8 items-center justify-center rounded-md border-[0.5px] border-zinc-300 text-zinc-600 hover:text-[#0F6E56]"
+              >
+                <IconEdit size={15} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                aria-label="Supprimer la séance"
+                className="flex h-8 w-8 items-center justify-center rounded-md border-[0.5px] border-zinc-300 text-[#DC2626] hover:bg-red-50"
+              >
+                <IconTrash size={15} />
+              </button>
+            </div>
+          )}
         </div>
 
         {isLoading && (
@@ -135,6 +166,42 @@ export default function SessionDetailPage() {
           </>
         )}
       </div>
+
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-20 flex items-center justify-center bg-black/45 p-4"
+          onClick={() => setConfirmDelete(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[340px] rounded-2xl bg-white p-6"
+          >
+            <h3 className="text-base font-bold text-zinc-900">
+              Supprimer cette séance ?
+            </h3>
+            <p className="mt-2 text-[13px] text-zinc-500">
+              Cette action est irréversible.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="flex-1 rounded-xl border border-zinc-200 py-3 text-[13px] font-medium text-zinc-700"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteMutation.mutate()}
+                disabled={deleteMutation.isPending}
+                className="flex-1 rounded-xl bg-[#DC2626] py-3 text-[13px] font-medium text-white disabled:opacity-60"
+              >
+                {deleteMutation.isPending ? "..." : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </main>

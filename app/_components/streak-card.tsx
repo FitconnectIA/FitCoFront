@@ -158,6 +158,7 @@ export function StreakCard() {
               min={toInputDate(tomorrow)}
               max={toInputDate(maxPauseDate)}
               onChange={(e) => setPauseUntil(e.target.value)}
+              aria-label="Date de fin de pause du streak"
               className="mt-4 w-full rounded-md border border-zinc-300 bg-white px-4 py-3 text-[14px] text-zinc-900 outline-none focus:border-[#0F6E56]"
             />
             <div className="mt-5 flex gap-2">
